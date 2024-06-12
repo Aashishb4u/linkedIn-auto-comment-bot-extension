@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>LinkedIn Auto Commenter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            width: 800px;
+            min-height: 300px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            -webkit-transition: .4s;
+            transition: .4s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            -webkit-transition: .4s;
+            transition: .4s;
+        }
+
+        input:checked+.slider {
+            background-color: #2196F3;
+        }
+
+        input:focus+.slider {
+            box-shadow: 0 0 1px #2196F3;
+        }
+
+        input:checked+.slider:before {
+            -webkit-transform: translateX(26px);
+            -ms-transform: translateX(26px);
+            transform: translateX(26px);
+        }
+
+        /* Rounded sliders */
+        .slider.round {
+            border-radius: 34px;
+        }
+
+        .slider.round:before {
+            border-radius: 50%;
+        }
+    </style>
+    <script>
+        // tailwind.config.js
+        module.exports = {
+            important: true, // Add !important to all utility classes
+            theme: {
+                extend: {
+                    // Extend your Tailwind CSS theme here
+                },
+            },
+            variants: {
+                extend: {
+                    // Extend variants here if needed
+                },
+            },
+            plugins: [
+                // Add any plugins here if needed
+            ],
+        };
+    </script>
+    <script src="popup.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+
+<body>
+    <div class="bot-container justify-center flex gap-4 my-5 flex-col">
+        <div class="flex items-center flex-row justify-between mx-5 my-3 items-center">
+            <div class="flex">
+                <h2 class="text-xl font-bold">
+                    LinkedIn Comment Bot
+                </h2>
+            </div>
+            <div class="flex items-center justify-center flex-row gap-4">
+
+               <div class="flex gap-2 align-center py-2">
+                    <label class="switch">
+                        <input type="checkbox" id="loopToggle" checked>
+                        <span class="slider round"></span>
+                    </label>
+                    <label class="flex text-gray-400 items-center" for="">Loop</label>
+               </div>
+               
+               <div class="flex gap-2 align-center py-2">
+                    <label class="switch">
+                        <input type="checkbox" id="reloadToggle" checked>
+                        <span class="slider round"></span>
+                    </label> 
+                    <label class="flex text-gray-400 items-center" for="">Reload</label>
+               </div>
+
+                <button id="saveButton"
+                    class="p-2 rounded border-2 border-solid border-blue-500 text-blue-500 text-lg font-bold">
+                    <div class="flex-row flex gap-2 align-center justify-center"><i
+                            style="display: flex !important; align-items: center !important;"
+                            class="fa fa-gear flex align-center"></i><span id="bot-status">Generate</span></div>
+                </button>
+            </div>
+
+
+            <!-- <button style="max-width: 40px;" class="border text-gray-600 p-3 border-solid border-gray-600 rounded-full">
+                <i class="fa fa-gear"></i>
+            </button> -->
+        </div>
+        <div class="flex mx-5">
+            <textarea id="commentMessageDiv" style="min-height: 250px;" name="" rows="15"
+                class='border-2 rounded border-blue-500 w-full p-3 border-blue-500' placeholder='Comment Description'
+                id=""></textarea>
+            <!-- <div class="relative w-full min-w-[200px]">
+                <textarea
+                    rows="12"
+                  class="peer h-full min-h-[400px] w-full resize-none rounded-[7px] border border-blue-gray-200 border-t-transparent bg-transparent px-3 py-2.5 font-sans text-sm font-normal text-blue-gray-700 outline outline-0 transition-all placeholder-shown:border placeholder-shown:border-blue-gray-200 placeholder-shown:border-t-blue-gray-200 focus:border-2 focus:border-gray-900 focus:border-t-transparent focus:outline-0 disabled:resize-none disabled:border-0 disabled:bg-blue-gray-50"
+                  placeholder=" ">
+                  </textarea>
+              </div> -->
+        </div>
+    </div>
+</body>
+
+</html>
