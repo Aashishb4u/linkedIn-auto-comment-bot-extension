@@ -1,4 +1,4 @@
-const keywords = ['developer', 'hiring', 'Join Our Team', 'Seeking to hire', 'Job Role', 'looking to hire', 'have a new opening for', 'web developer', 'looking for', 'react', 'node js', 'angular'];
+const keywords = ['developer', 'Urgently seeking', "we're looking for", 'hiring', 'Join Our Team', 'Seeking to hire', 'Job Role', 'looking to hire', 'have a new opening for', 'web developer', 'looking for', 'react', 'node js', 'angular'];
 const excludedKeywords = ['I’m happy to share that I’m starting a new position'];
 const textToType = "Hi, I'm Aashish Bhagwat, a full-stack developer with 7 years of experience in Angular, Node.js, ReactJS, Laravel, IONIC, and Tailwind. I've delivered over 40 projects and co-founded CreativeHand. Contact me at +91-8208690072 or WhatsApp +91-9403733265. Give me a chance to prove my work. Check my portfolio: [Aashish Bhagwat](https://aashish-bhagwat.creativehand.co.in)";
 const typingSpeed = 100;
@@ -9,12 +9,16 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('DOMContentLoaded');
     typingStarted = false;
     chrome.storage.sync.set({ typingStarted: false });
-     // Send the message to the background script
-     chrome.runtime.sendMessage({ message: 'typingStarted', commentMessage: typingStarted });
+    // Send the message to the background script
+    chrome.runtime.sendMessage({ message: 'typingStarted', commentMessage: typingStarted });
 });
 
 function getRandomDelay() {
     return Math.floor(Math.random() * (2000 - 700 + 1)) + 700;
+}
+
+function typingSpeedDelay() {
+    return Math.floor(Math.random() * 100) + 100;
 }
 
 function getLongDelay() {
@@ -38,6 +42,19 @@ function getPostIdentifier(post) {
     const postContainer = post.closest('.feed-shared-update-v2');
     console.log(postContainer.getAttribute('data-urn'));
     return postContainer.getAttribute('data-urn');  // Use an appropriate attribute for a unique identifier
+}
+
+function postNextAction() {
+    typingStarted = false;
+    chrome.storage.sync.set({ typingStarted: false });
+    chrome.runtime.sendMessage({ message: 'typingStarted', commentMessage: typingStarted });
+    chrome.storage.sync.get(['reloadEnabled', 'loopEnabled', 'commentMessage'], (data) => {
+        if (data.reloadEnabled) {
+            reloadPage();
+        } else if (data.loopEnabled && data.commentMessage) {
+            commentOnPosts(data.commentMessage);
+        }
+    });
 }
 
 function scrollToThreeTimes() {
@@ -69,10 +86,8 @@ function handleMatchingPosts(posts) {
     });
 }
 
-
 function commentOnPosts(commentMessage) {
     // Scroll the page to load more content
-
     scrollToThreeTimes().then(() => {
         console.log('Called Me');
 
@@ -81,6 +96,8 @@ function commentOnPosts(commentMessage) {
             const posts = document.querySelectorAll('.feed-shared-update-v2__description-wrapper');
             handleMatchingPosts(posts).then((res) => {
                 if (res.posthaskey) {
+                    let postsProcessed = 0;
+
                     posts.forEach((post) => {
                         const postTextElement = post.querySelector('.tvm-parent-container');
                         if (postTextElement) {
@@ -92,74 +109,74 @@ function commentOnPosts(commentMessage) {
                                     setTimeout(() => {
                                         chrome.storage.sync.get('commentedPosts', (data) => {
                                             const commentBox = post.closest('#fie-impression-container').querySelector('.ql-editor');
-                                            const commentedPosts = data.commentedPosts || [];
+                                            let commentedPosts = data.commentedPosts || [];
                                             const postId = getPostIdentifier(post);
                                             if (commentedPosts.includes(postId)) {
                                                 commentBox.setAttribute('data-placeholder', 'Already Commented Here!');
                                                 commentBox.setAttribute('aria-placeholder', 'Already Commented Here!');
-                                            }
-                                            if (!commentedPosts.includes(postId) && commentBox) {
+                                                postsProcessed++;
+                                                if (postsProcessed === posts.length) {
+                                                    postNextAction();
+                                                }
+                                            } else if (!commentedPosts.includes(postId) && commentBox) {
+                                                // Should be pushed here only.
+                                               
+                                                commentedPosts = Array.from(new Set(commentedPosts).add(postId));
+                                                chrome.storage.sync.set({ commentedPosts: commentedPosts });
+
                                                 commentBox.setAttribute('data-placeholder', 'comments started');
                                                 commentBox.setAttribute('aria-placeholder', 'comments started');
                                                 commentBox.innerHTML = ''; // Clear any existing content
-                                                // typingStarted = true;
-                                                // chrome.storage.sync.set({ typingStarted: true });
                                                 simulateTyping(commentBox, commentMessage, typingSpeed).then(() => {
                                                     setTimeout(() => {
                                                         const submitButton = post.closest('#fie-impression-container').querySelector('.comments-comment-box__submit-button');
                                                         if (submitButton) {
                                                             setTimeout(() => {
                                                                 submitButton.click();
-                                                                commentedPosts.push(postId);
-                                                                chrome.storage.sync.set({ commentedPosts: commentedPosts });
-                                                                setTimeout(() => {
-                                                                    typingStarted = false;
-                                                                    chrome.storage.sync.set({ typingStarted: false });
-                                                                    // Send the message to the background script
-                                                                    chrome.runtime.sendMessage({ message: 'typingStarted', commentMessage: typingStarted });
-                                                                    chrome.storage.sync.get(['reloadEnabled', 'loopEnabled', 'commentMessage'], (data) => {
-                                                                        if (data.reloadEnabled) {
-                                                                            reloadPage();
-                                                                        } else if(data.loopEnabled && data.commentMessage) {
-                                                                            commentOnPosts(data.commentMessage);
-                                                                        }
-                                                                    });
-                                                                }, getLongDelay());
-                                                            }, getRandomDelay());
+                                                                postsProcessed++;
+                                                                if (postsProcessed === posts.length) {
+                                                                    postNextAction();
+                                                                }
 
+                                                            }, getRandomDelay());
                                                         }
                                                     }, getRandomDelay());
                                                 });
                                             } else {
-                                                typingStarted = false;
-                                                chrome.storage.sync.set({ typingStarted: false });
-                                                 // Send the message to the background script
-                                                chrome.runtime.sendMessage({ message: 'typingStarted', commentMessage: typingStarted });
-         
+                                                postsProcessed++;
+                                                if (postsProcessed === posts.length) {
+                                                    postNextAction();
+                                                }
                                             }
                                         });
-
                                     }, getRandomDelay());
+                                } else {
+                                    postsProcessed++;
+                                    if (postsProcessed === posts.length) {
+                                        postNextAction();
+                                    }
                                 }
+                            } else {
+                                postsProcessed++;
+                                if (postsProcessed === posts.length) {
+                                    postNextAction();
+                                }
+                            }
+                        } else {
+                            postsProcessed++;
+                            if (postsProcessed === posts.length) {
+                                postNextAction();
                             }
                         }
                     });
                 } else {
-                    typingStarted = false;
-                    chrome.storage.sync.set({ typingStarted: false });
-                     // Send the message to the background script
-                    chrome.runtime.sendMessage({ message: 'typingStarted', commentMessage: typingStarted });
-                    setTimeout(() => {
-                        reloadPage();
-                    }, getRandomDelay());
+                    postNextAction();
                 }
-            })
-
-        }, 3000)
+            });
+        }, 3000);
     });
-
-
 }
+
 
 function reloadPage() {
     setTimeout(() => {
@@ -183,7 +200,7 @@ function simulateTyping(element, text, speed) {
                 element.textContent += char;
 
                 index++;
-                setTimeout(typeCharacter, speed);
+                setTimeout(typeCharacter, typingSpeedDelay());
             } else {
                 resolve(); // Resolve the promise once typing completes
             }
@@ -192,7 +209,7 @@ function simulateTyping(element, text, speed) {
         typeCharacter();
     });
 
-}   
+}
 
 chrome.storage.sync.get(['commentMessage', 'loopEnabled', 'typingStarted'], (data) => {
     if (data.commentMessage && data.loopEnabled && !data.typingStarted) {
@@ -216,13 +233,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         commentOnPosts(commentMessage);
     }
 
-    if(message.message === 'reloadToggle') {
-        
+    if (message.message === 'reloadToggle') {
+
     }
 
 
-    if(message.message === 'loopEnabled') {
-        
+    if (message.message === 'loopEnabled') {
+
     }
 });
 
