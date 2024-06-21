@@ -1,6 +1,6 @@
 const keywords = ['developer', 'Urgently seeking', "we're looking for", 'hiring', 'Join Our Team', 'Seeking to hire', 'Job Role', 'looking to hire', 'have a new opening for', 'web developer', 'looking for', 'react', 'node js', 'angular'];
 const excludedKeywords = ['I’m happy to share that I’m starting a new position'];
-const textToType = "Hi, I'm Aashish Bhagwat, a full-stack developer with 7 years of experience in Angular, Node.js, ReactJS, Laravel, IONIC, and Tailwind. I've delivered over 40 projects and co-founded CreativeHand. Contact me at +91-8208690072 or WhatsApp +91-9403733265. Give me a chance to prove my work. Check my portfolio: [Aashish Bhagwat](https://aashish-bhagwat.creativehand.co.in)";
+const textToType = "";
 const typingSpeed = 100;
 let typingStarted = false;
 
@@ -18,7 +18,7 @@ function getRandomDelay() {
 }
 
 function typingSpeedDelay() {
-    return Math.floor(Math.random() * 100) + 100;
+    return Math.floor(Math.random() * 100) + 10;
 }
 
 function getLongDelay() {
@@ -59,18 +59,28 @@ function postNextAction() {
 
 function scrollToThreeTimes() {
     return new Promise((resolve) => {
-        let count = 0;
-        const scrollInterval$ = setInterval(() => {
-            let scrollDistance = document.body.scrollHeight;
-            window.scrollTo(0, scrollDistance);
-            count++;
-            if (count === 2) {
-                clearInterval(scrollInterval$);
-                resolve();  // Resolve the promise after scrolling three times
+        const initialScrollHeight = document.body.scrollHeight;
+        let targetScrollHeight = initialScrollHeight * 3;
+        let currentPosition = 0;
+
+        const scrollInterval = setInterval(() => {
+            currentPosition += 50; // Scroll by 50 pixels each time
+            window.scrollTo(0, currentPosition);
+
+            // Check if we've reached or exceeded the target scroll height
+            if (currentPosition >= targetScrollHeight) {
+                clearInterval(scrollInterval);
+                resolve();  // Resolve the promise after scrolling three times the initial height
             }
-        }, 1500);
+        }, 50); // Adjust the interval (in milliseconds) to control the scroll speed
     });
 }
+
+// Example usage: Call the function and do something after scrolling is complete
+// scrollToThreeTimes().then(() => {
+//     console.log('Scrolling completed.');
+// });
+
 
 function handleMatchingPosts(posts) {
     return new Promise((resolve) => {
@@ -120,10 +130,19 @@ function commentOnPosts(commentMessage) {
                                                 }
                                             } else if (!commentedPosts.includes(postId) && commentBox) {
                                                 // Should be pushed here only.
-                                               
+
                                                 commentedPosts = Array.from(new Set(commentedPosts).add(postId));
                                                 chrome.storage.sync.set({ commentedPosts: commentedPosts });
+                                                // Ensure commentedPosts is a unique array and add the new postId
+                                                // commentedPosts.push(postId);
+                                                // chrome.storage.sync.set({ commentedPosts: commentedPosts });
 
+                                                // Save the updated commentedPosts array to chrome.storage.sync
+                                                // chrome.storage.sync.set({ commentedPosts : commentedPosts }, (data) => {
+                                                chrome.storage.sync.get(['commentedPosts'], (result) => {
+                                                    console.log('Stored commentedPosts:', result.commentedPosts);
+                                                });
+                                                console.log('commentedPosts is updated:', data.commentedPosts);
                                                 commentBox.setAttribute('data-placeholder', 'comments started');
                                                 commentBox.setAttribute('aria-placeholder', 'comments started');
                                                 commentBox.innerHTML = ''; // Clear any existing content
@@ -142,6 +161,8 @@ function commentOnPosts(commentMessage) {
                                                         }
                                                     }, getRandomDelay());
                                                 });
+                                                // });
+
                                             } else {
                                                 postsProcessed++;
                                                 if (postsProcessed === posts.length) {
@@ -242,10 +263,3 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     }
 });
-
-
-
-
-
-
-

@@ -9,16 +9,25 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log(commentMessage);
 
         // Save the comment message to Chrome storage
-        chrome.storage.sync.set({ commentMessage: commentMessage }, () => {
+        chrome.storage.local.set({ commentMessage: commentMessage }, () => {
             console.log('Comment message saved.');
 
             // Send the message to the LinkedIn tab if it is active
             chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-                tabs.forEach((tab) => {
-                    if (tab.url.includes('www.linkedin.com')) {
+                const activeTab = tabs[0];
+
+                // Check if the active tab is a LinkedIn tab
+                if (!activeTab.url.includes('linkedin.com')) {
+                    chrome.tabs.create({ url: 'https://www.linkedin.com' }, (newTab) => {
                         chrome.tabs.sendMessage(tab.id, { message: 'updateCommentMessage', commentMessage: commentMessage });
-                    }
-                });
+                    });
+                } else {
+                    tabs.forEach((tab) => {
+                        if (tab.url.includes('www.linkedin.com')) {
+                            chrome.tabs.sendMessage(tab.id, { message: 'updateCommentMessage', commentMessage: commentMessage });
+                        }
+                    });
+                }
             });
         });
     });
@@ -30,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Reload Enabled:', reloadEnabled);
 
         // Save the reload state to Chrome storage
-        chrome.storage.sync.set({ reloadEnabled: reloadEnabled }, () => {
+        chrome.storage.local.set({ reloadEnabled: reloadEnabled }, () => {
             console.log('Reload state saved.');
         });
 
@@ -51,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Reload Enabled:', loopToggle);
 
         // Save the reload state to Chrome storage
-        chrome.storage.sync.set({ loopEnabled: loopToggle }, () => {
+        chrome.storage.local.set({ loopEnabled: loopToggle }, () => {
             console.log('loopToggle state saved.');
         });
 
@@ -69,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // console.log('message Check', typingStarted);
         if (message.message === 'typingStarted') {
-            // chrome.storage.sync.get('typingStarted', (data) => {
+            // chrome.storage.local.get('typingStarted', (data) => {
             const botStatusBtn = document.getElementById('bot-status');
             if (botStatusBtn && message.commentMessage) {
                 botStatusBtn.innerText = 'Typing...';
@@ -85,7 +94,7 @@ function initiatePopup() {
     const comment = document.getElementById('commentMessageDiv');
     console.log('"in popup"');
     if (comment) {
-        chrome.storage.sync.get('commentMessage', (data) => {
+        chrome.storage.local.get('commentMessage', (data) => {
             if (chrome.runtime.lastError) {
                 console.error(chrome.runtime.lastError);
             } else if (data.commentMessage) {
@@ -96,8 +105,7 @@ function initiatePopup() {
         console.error('Element with ID "commentMessageDiv" not found.');
     }
 
-
-    chrome.storage.sync.get('typingStarted', (data) => {
+    chrome.storage.local.get('typingStarted', (data) => {
         console.log('data.typingStarted', data.typingStarted);
         const botStatusBtn = document.getElementById('bot-status');
         if (botStatusBtn && data.typingStarted) {
@@ -108,7 +116,7 @@ function initiatePopup() {
     });
 
     // Initialize reload toggle switch state
-    chrome.storage.sync.get('reloadEnabled', (data) => {
+    chrome.storage.local.get('reloadEnabled', (data) => {
         const reloadToggle = document.getElementById('reloadToggle');
         if (reloadToggle) {
             if (data.reloadEnabled !== undefined) {
@@ -117,10 +125,10 @@ function initiatePopup() {
         } else {
             console.error('Element with ID "reloadToggle" not found.');
         }
-    }); 
-    
+    });
+
     // Initialize reload toggle switch state
-    chrome.storage.sync.get('loopEnabled', (data) => {
+    chrome.storage.local.get('loopEnabled', (data) => {
         const loopEnabled = document.getElementById('loopToggle');
         if (loopEnabled) {
             if (data.loopEnabled !== undefined) {

@@ -1,10 +1,12 @@
+let tabIds = [];
+
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-    if (changeInfo.status == 'complete' && tab.url.includes('linkedin.com')) {
-        
-        const tabIds = [];
+    if (changeInfo.status === 'complete' && tab.url.includes('linkedin.com')) {
+        console.log('I am Triggered - in background', tabId);
         if (tab.url.includes('linkedin.com')) {
             tabIds = Array.from(new Set(tabIds).add(tabId));
-            chrome.storage.sync.set({ linkedInTabIds: tabIds });
+            chrome.storage.local.set({ linkedInTabIds: tabIds });
+            chrome.storage.local.set({ currentTabId: tabId });
             // const linkedInTabId = tabId;
         }
         // Perform actions related to LinkedIn page
@@ -12,11 +14,11 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
     }
 });
 
-chrome.runtime.onInstalled.addListener((tabId, removeInfo, tab) => {
+chrome.runtime.onInstalled.addListener((tabId, removeremoveInfo, tab) => {
     // console.log('OnInstall');
     console.log('Installed');
-    chrome.storage.sync.set({ loopEnabled: true, typingStarted: false, reloadEnabled: true, commentMessage: "Hi, I'm Aashish Bhagwat, a full-stack developer with 7 years of experience in Angular, Node.js, ReactJS, Laravel, IONIC, and Tailwind. I've delivered over 40 projects and co-founded CreativeHand. Contact me at +91-8208690072 or WhatsApp +91-9403733265. Give me a chance to prove my work. Check my portfolio: [Aashish Bhagwat](https://aashish-bhagwat.creativehand.co.in)" });
-    chrome.alarms.create('checkLinkedIn', { periodInMinutes: 5 }); // 6 seconds
+    chrome.storage.local.set({ loopEnabled: true, typingStarted: false, reloadEnabled: true, 
+        commentMessage: "" });
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -26,32 +28,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 });
 
+
+
 // // Listen for tab removal event
-chrome.tabs.onRemoved.addListener((tabId, removeInfo, tab) => {
-    chrome.storage.sync.set({typingStarted: false});
-//     console.log('removeInfo', removeInfo);
-//     console.log('tabId', tabId);
-//     if (tab.url.includes('linkedin.com')) {
-//         chrome.runtime.sendMessage({ message: 'typingStarted', commentMessage: false });
-//     }
-//     // Reset variables in Chrome storage when a tab is closed
-
-});
-
-
-chrome.alarms.onAlarm.addListener((alarm) => {
-    chrome.storage.sync.get('commentMessage', (data) => {
-        chrome.storage.sync.get('typingStarted', (data) => {
-            if (alarm.name === 'checkLinkedIn' && data.commentMessage && !typingStarted) {
-                console.log("Alarmed");
-                chrome.tabs.query({ active: true }, (tabs) => {
-                    tabs.forEach((tab) => {
-                        if (tab.url.includes('www.linkedin.com')) {
-                            chrome.tabs.sendMessage(tab.id, { message: 'updateCommentMessage', commentMessage: data.commentMessage });
-                        }
-                    });
-                });
-            }
-        });
+chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
+    chrome.storage.local.get(['currentTabId', 'linkedInTabIds'], (data) => {
+        console.log('data.linkedInTabIds',data.linkedInTabIds);
+        if(data.currentTabId === tabId) {
+            chrome.storage.local.set({typingStarted: false});
+            chrome.storage.local.set({currentTabId: null});
+            // chrome.runtime.sendMessage({ message: 'typingStarted', commentMessage: message.commentMessage });
+        }
     });
 });
