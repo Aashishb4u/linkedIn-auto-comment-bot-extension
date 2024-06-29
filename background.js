@@ -1,4 +1,5 @@
 let tabIds = [];
+// Gemini API KEY:  AIzaSyDw0cLcBMozFsjYnQpc6790hDyA9_2fMDk
 
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
     if (changeInfo.status === 'complete' && tab.url.includes('linkedin.com')) {

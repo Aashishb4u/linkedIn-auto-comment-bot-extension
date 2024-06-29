@@ -3,12 +3,13 @@ const excludedKeywords = ['I’m happy to share that I’m starting a new positi
 const textToType = "";
 const typingSpeed = 100;
 let typingStarted = false;
+let iteration = 1;
 
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOMContentLoaded');
     typingStarted = false;
-    chrome.storage.sync.set({ typingStarted: false });
+    chrome.storage.local.set({ typingStarted: false });
     // Send the message to the background script
     chrome.runtime.sendMessage({ message: 'typingStarted', commentMessage: typingStarted });
 });
@@ -46,9 +47,9 @@ function getPostIdentifier(post) {
 
 function postNextAction() {
     typingStarted = false;
-    chrome.storage.sync.set({ typingStarted: false });
+    chrome.storage.local.set({ typingStarted: false });
     chrome.runtime.sendMessage({ message: 'typingStarted', commentMessage: typingStarted });
-    chrome.storage.sync.get(['reloadEnabled', 'loopEnabled', 'commentMessage'], (data) => {
+    chrome.storage.local.get(['reloadEnabled', 'loopEnabled', 'commentMessage'], (data) => {
         if (data.reloadEnabled) {
             reloadPage();
         } else if (data.loopEnabled && data.commentMessage) {
@@ -59,9 +60,9 @@ function postNextAction() {
 
 function scrollToThreeTimes() {
     return new Promise((resolve) => {
-        const initialScrollHeight = document.body.scrollHeight;
-        let targetScrollHeight = initialScrollHeight * 3;
-        let currentPosition = 0;
+        // const initialScrollHeight = 1500;
+        let targetScrollHeight = 4500 * iteration;
+        let currentPosition = 4500 * (iteration - 1);
 
         const scrollInterval = setInterval(() => {
             currentPosition += 50; // Scroll by 50 pixels each time
@@ -70,6 +71,7 @@ function scrollToThreeTimes() {
             // Check if we've reached or exceeded the target scroll height
             if (currentPosition >= targetScrollHeight) {
                 clearInterval(scrollInterval);
+                iteration++;
                 resolve();  // Resolve the promise after scrolling three times the initial height
             }
         }, 50); // Adjust the interval (in milliseconds) to control the scroll speed
@@ -117,7 +119,7 @@ function commentOnPosts(commentMessage) {
                                 if (commentButton) {
                                     commentButton.click();
                                     setTimeout(() => {
-                                        chrome.storage.sync.get('commentedPosts', (data) => {
+                                        chrome.storage.local.get('commentedPosts', (data) => {
                                             const commentBox = post.closest('#fie-impression-container').querySelector('.ql-editor');
                                             let commentedPosts = data.commentedPosts || [];
                                             const postId = getPostIdentifier(post);
@@ -132,14 +134,14 @@ function commentOnPosts(commentMessage) {
                                                 // Should be pushed here only.
 
                                                 commentedPosts = Array.from(new Set(commentedPosts).add(postId));
-                                                chrome.storage.sync.set({ commentedPosts: commentedPosts });
+                                                chrome.storage.local.set({ commentedPosts: commentedPosts });
                                                 // Ensure commentedPosts is a unique array and add the new postId
                                                 // commentedPosts.push(postId);
-                                                // chrome.storage.sync.set({ commentedPosts: commentedPosts });
+                                                // chrome.storage.local.set({ commentedPosts: commentedPosts });
 
-                                                // Save the updated commentedPosts array to chrome.storage.sync
-                                                // chrome.storage.sync.set({ commentedPosts : commentedPosts }, (data) => {
-                                                chrome.storage.sync.get(['commentedPosts'], (result) => {
+                                                // Save the updated commentedPosts array to chrome.storage.local
+                                                // chrome.storage.local.set({ commentedPosts : commentedPosts }, (data) => {
+                                                chrome.storage.local.get(['commentedPosts'], (result) => {
                                                     console.log('Stored commentedPosts:', result.commentedPosts);
                                                 });
                                                 console.log('commentedPosts is updated:', data.commentedPosts);
@@ -232,11 +234,11 @@ function simulateTyping(element, text, speed) {
 
 }
 
-chrome.storage.sync.get(['commentMessage', 'loopEnabled', 'typingStarted'], (data) => {
+chrome.storage.local.get(['commentMessage', 'loopEnabled', 'typingStarted'], (data) => {
     if (data.commentMessage && data.loopEnabled && !data.typingStarted) {
         commentMessage = data.commentMessage;
         typingStarted = true;
-        chrome.storage.sync.set({ typingStarted: true });
+        chrome.storage.local.set({ typingStarted: true });
         commentOnPosts(data.commentMessage);
     }
 });
@@ -246,7 +248,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.message === 'updateCommentMessage' && typingStarted === false) {
         commentMessage = message.commentMessage;
         typingStarted = true;
-        chrome.storage.sync.set({ typingStarted: true });
+        chrome.storage.local.set({ typingStarted: true });
 
         // Send the message to the background script
         chrome.runtime.sendMessage({ message: 'typingStarted', commentMessage: typingStarted });
